@@ -1,0 +1,11 @@
+transformers
+pydantic
+torch
+huggingface_hub
+PyJWT
+requests
+fastapi
+uvicorn
+aiofiles
+python-multipart
+sentencepiece
