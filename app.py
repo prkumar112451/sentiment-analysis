@@ -2,24 +2,28 @@ import requests
 import time
 import json
 from sentiment import sentiment_text
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
 API_URL = "http://localhost:5001/api/SentimentRequest"
 POLL_INTERVAL = 1  # seconds
 
 def poll_for_request():
     resp = requests.get(API_URL)
     if resp.status_code != 200:
-        print("No new requests or error:", resp.status_code, resp.text)
+        logger.info("No new requests or error:", resp.status_code, resp.text)
         return None
     return resp.json()
 
 def send_result(result):
-    print(result)
+    logger.info(result)
     resp = requests.post(API_URL, json=result)
     if 200 <= resp.status_code < 300:
-        print("Result sent successfully")
+        logger.info("Result sent successfully")
     else:
-        print("Failed to send result: ", resp.status_code, resp.text)
+        logger.info("Failed to send result: ", resp.status_code, resp.text)
 
 def convert_to_csharp_sentiment_model(py_results):
     out = []
@@ -46,7 +50,7 @@ def main():
     while True:
         try:
             req_body = poll_for_request()
-            print(req_body)
+            logger.info(req_body)
             if not req_body or req_body.get("location") is None:
                 time.sleep(POLL_INTERVAL)
                 continue
@@ -82,7 +86,7 @@ def main():
 
             send_result(response_payload)
         except Exception as e:
-            print(f"Error: {e}")
+            logger.info(f"Error: {e}")
 
         time.sleep(POLL_INTERVAL)
 
