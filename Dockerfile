@@ -4,14 +4,17 @@ FROM python:3.10
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Only copy requirements first, for better cache
+COPY requirements.txt ./
 
-# Install any needed dependencies specified in requirements.txt
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 80 available to the world outside this container
+# Now copy the rest of the app code
+COPY . /app
+
+# Expose port
 EXPOSE 80
 
-# Run uvicorn when the container launches
+# Run when container launches
 CMD ["python", "-m", "app"]
