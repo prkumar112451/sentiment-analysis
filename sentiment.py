@@ -14,11 +14,9 @@ login(token=hf_access_token)
 # 3. Model + label meta-data
 language_model_dict = {
     "en": "cardiffnlp/twitter-roberta-base-sentiment",
-    "th": "poom-sci/WangchanBERTa-finetuned-sentiment",
 }
 label_mapping_dict = {
     "en": {"LABEL_0": "negative", "LABEL_1": "neutral", "LABEL_2": "positive"},
-    "th": {"neg": "negative", "neu": "neutral", "pos": "positive"},
 }
 
 # 4. Load models/tokenizers (on correct device!)
