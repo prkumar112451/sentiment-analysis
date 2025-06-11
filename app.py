@@ -3,13 +3,33 @@ import time
 import json
 from sentiment import sentiment_text
 import logging
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 API_URL = "http://localhost:5001/api/SentimentRequest"
 POLL_INTERVAL = 1  # seconds
+# Global variables to store the private IP and computer name
+private_ip = None
+computer_name = None
 
+def get_network_info():
+    global private_ip, computer_name
+    if private_ip is None or computer_name is None:
+        try:
+            url = "http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+            headers = {"Metadata": "true"}            
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                metadata = response.json()
+                computer_name = metadata.get("compute", {}).get("name", "")
+                private_ip = metadata.get("network", {}).get("interface", [])[0].get("ipv4", {}).get("ipAddress", [])[0].get("privateIpAddress", "")
+        except Exception as e:
+            logger.error(f"Error getting private IP address or computer name: {e}")
+            private_ip = 'Unknown'
+            computer_name = 'Unknown'
+            
 def poll_for_request():
     resp = requests.get(API_URL)
     if resp.status_code != 200:
@@ -88,7 +108,10 @@ def main():
         except Exception as e:
             logger.info(f"Error: {e}")
 
-        time.sleep(POLL_INTERVAL)
+        #time.sleep(POLL_INTERVAL)
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    main()
+    get_network_info()
+    API_URL = f"http://{private_ip}:5001/api/SentimentRequest"
+    asyncio.run(main())
