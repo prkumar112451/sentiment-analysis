@@ -1,8 +1,8 @@
-
 import os
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from huggingface_hub import login
+import gc
 
 # 1. Setup device: use GPU if available
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -104,33 +104,32 @@ def extract_id_and_texts(texts_data):
 
 
 def sentiment_text(texts_data, language_code):
-    """
-    texts_data: list of dicts ({'id': int, 'document': str}) or list of strings.
-    language_code: 'en', 'th', etc.
-    Returns a list of {'id', 'text', 'sentiment': [{'label','score','id'}, ...]}
-    """
     if language_code not in model_tokenizer_dict:
         return [{"error": f"Model for language code '{language_code}' not found"}]
+
     result = []
     try:
         id_text_tuples = extract_id_and_texts(texts_data)
-    except Exception as e:
-        return [{"error": f"Data preprocessing failed: {str(e)}"}]
-
-    chunks_list = create_chunks(id_text_tuples)
-    for chunks in chunks_list:
-        try:
-            sentiments = sentiment_final(chunks, language_code)
-            for idx, sentiment_scores in enumerate(sentiments):
-                serial = chunks[idx][0]
-                text = chunks[idx][1]
-                sorted_scores = sorted(sentiment_scores, key=lambda x: x['label'])
-                result.append({
-                    "id": serial,
-                    "text": text,
-                    "sentiment": sorted_scores
-                })
-        except Exception as e:
-            result.append({"error": str(e)})
-    result.sort(key=lambda x: x['id'])
-    return result
+        chunks_list = create_chunks(id_text_tuples)
+        for chunks in chunks_list:
+            try:
+                sentiments = sentiment_final(chunks, language_code)
+                for idx, sentiment_scores in enumerate(sentiments):
+                    serial = chunks[idx][0]
+                    text = chunks[idx][1]
+                    sorted_scores = sorted(sentiment_scores, key=lambda x: x['label'])
+                    result.append({
+                        "id": serial,
+                        "text": text,
+                        "sentiment": sorted_scores
+                    })
+            except Exception as e:
+                result.append({"error": str(e)})
+        result.sort(key=lambda x: x['id'])
+        return result
+    finally:
+        # Optional: clean only if you're sure memory usage is high
+        if 'result' in locals():
+            del result
+        gc.collect()
+        torch.cuda.empty_cache()
