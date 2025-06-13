@@ -3,6 +3,7 @@ import time
 import json
 from sentiment import sentiment_text
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -109,6 +110,8 @@ def main():
 
             send_result(response_payload)
 
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
         except Exception as e:
             logger.error(f"Error: {e}")
 
